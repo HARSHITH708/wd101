@@ -1,30 +1,30 @@
 const form = document.getElementById("registrationForm");
 const tableBody = document.querySelector("#entriesTable tbody");
 
+// Get stored entries or return empty array
 function getEntries() {
   return JSON.parse(localStorage.getItem("userEntries")) || [];
 }
 
+// Save entries back to localStorage
 function saveEntries(entries) {
   localStorage.setItem("userEntries", JSON.stringify(entries));
 }
 
-function calculateAge(dob) {
-  const birthDate = new Date(dob);
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
-}
-
+// Calculate min and max DOB based on age limits (18–55)
 function isValidDOB(dob) {
-  const age = calculateAge(dob);
-  return age >= 18 && age <= 55;
+  const today = new Date();
+  const dobDate = new Date(dob);
+  const minDOB = new Date();
+  const maxDOB = new Date();
+
+  minDOB.setFullYear(today.getFullYear() - 55);
+  maxDOB.setFullYear(today.getFullYear() - 18);
+
+  return dobDate >= minDOB && dobDate <= maxDOB;
 }
 
+// Add a new row to the table
 function addEntryToTable(entry) {
   const row = tableBody.insertRow();
   row.insertCell(0).textContent = entry.name;
@@ -34,12 +34,14 @@ function addEntryToTable(entry) {
   row.insertCell(4).textContent = entry.termsAccepted ? "Yes" : "No";
 }
 
+// Display all stored entries on load
 function displayEntries() {
   const entries = getEntries();
-  tableBody.innerHTML = "";
+  tableBody.innerHTML = ""; // Clear old content
   entries.forEach(addEntryToTable);
 }
 
+// Handle form submission
 form.addEventListener("submit", function (e) {
   e.preventDefault();
 
@@ -57,18 +59,18 @@ form.addEventListener("submit", function (e) {
   }
 
   if (!isValidDOB(entry.dob)) {
-    alert("Age must be between 18 and 55.");
+    alert("Age must be between 18 and 55 years.");
     return;
   }
 
   const entries = getEntries();
   entries.push(entry);
   saveEntries(entries);
-  addEntryToTable(entry);
-
+  addEntryToTable(entry); // Show new entry immediately
   form.reset();
 });
 
+// Show saved entries on page load
 window.addEventListener("DOMContentLoaded", displayEntries);
 
 
