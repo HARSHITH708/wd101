@@ -1,59 +1,43 @@
 const form = document.getElementById("registrationForm");
-const entriesTable = document.querySelector("#entriesTable tbody");
+const tableBody = document.querySelector("#entriesTable tbody");
 
-// Load existing entries from localStorage
 function getEntries() {
   return JSON.parse(localStorage.getItem("userEntries")) || [];
 }
 
-// Show entries in the table
-function displayEntries() {
-  const entries = getEntries();
-  entriesTable.innerHTML = "";
-  entries.forEach(entry => {
-    const row = `<tr>
-      <td>${entry.name}</td>
-      <td>${entry.email}</td>
-      <td>${entry.password}</td>
-      <td>${entry.dob}</td>
-      <td>${entry.termsAccepted ? "Yes" : "No"}</td>
-    </tr>`;
-    entriesTable.innerHTML += row;
-  });
+function saveEntries(entries) {
+  localStorage.setItem("userEntries", JSON.stringify(entries));
 }
 
-// Age validator function for 18-55 age range
-function isValidDOB(dob) {
+function calculateAge(dob) {
   const birthDate = new Date(dob);
   const today = new Date();
-
-  const age = today.getFullYear() - birthDate.getFullYear();
-  const m = today.getMonth() - birthDate.getMonth();
-
-  // Adjust age if birthday hasn't occurred yet this year
-  const adjustedAge = m < 0 || (m === 0 && today.getDate() < birthDate.getDate()) ? age - 1 : age;
-
-  return adjustedAge >= 18 && adjustedAge <= 55;
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
 }
 
-// Validate all form fields
-function validateForm(data) {
-  if (!data.name || !data.email || !data.password || !data.dob) {
-    alert("Please fill all fields!");
-    return false;
-  }
+function isValidDOB(dob) {
+  const age = calculateAge(dob);
+  return age >= 18 && age <= 55;
+}
 
-  if (!data.termsAccepted) {
-    alert("You must accept the terms and conditions.");
-    return false;
-  }
+function addEntryToTable(entry) {
+  const row = tableBody.insertRow();
+  row.insertCell(0).textContent = entry.name;
+  row.insertCell(1).textContent = entry.email;
+  row.insertCell(2).textContent = entry.password;
+  row.insertCell(3).textContent = entry.dob;
+  row.insertCell(4).textContent = entry.termsAccepted ? "Yes" : "No";
+}
 
-  if (!isValidDOB(data.dob)) {
-    alert("You must be between 18 and 55 years old to register.");
-    return false;
-  }
-
-  return true;
+function displayEntries() {
+  const entries = getEntries();
+  tableBody.innerHTML = "";
+  entries.forEach(addEntryToTable);
 }
 
 form.addEventListener("submit", function (e) {
@@ -67,17 +51,25 @@ form.addEventListener("submit", function (e) {
     termsAccepted: document.getElementById("terms").checked,
   };
 
-  if (!validateForm(entry)) return;
+  if (!entry.termsAccepted) {
+    alert("Please accept the terms and conditions.");
+    return;
+  }
+
+  if (!isValidDOB(entry.dob)) {
+    alert("Age must be between 18 and 55.");
+    return;
+  }
 
   const entries = getEntries();
   entries.push(entry);
-  localStorage.setItem("userEntries", JSON.stringify(entries));
+  saveEntries(entries);
+  addEntryToTable(entry);
 
-  displayEntries();
   form.reset();
 });
 
-
 window.addEventListener("DOMContentLoaded", displayEntries);
+
 
   
